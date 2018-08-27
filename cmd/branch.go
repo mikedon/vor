@@ -58,7 +58,7 @@ func generateBranchName(issue jira.JiraIssue) string {
 	}
 
 	// remove empty entries
-	cleanTemplate := make([]string, len(template))
+	var cleanTemplate []string
 	for _, item := range template {
 		if item != "" {
 			cleanTemplate = append(cleanTemplate, item)
