@@ -38,7 +38,9 @@ func KebabCase(s string) string {
 		"/", "-",
 		"\n", "",
 		"\t", "-",
-		"&", "and")
+		"&", "and",
+		",", "",
+		".", "")
 	return r.Replace(s)
 }
 

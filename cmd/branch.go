@@ -20,8 +20,8 @@ import (
 
 // TODO: this should be generic per issue provider
 func generateIssueTag(issue jira.JiraIssue) string {
-	issueType := strings.ToLower(issue.Fields.IssueType.Name)
-	priority := strings.ToLower(issue.Fields.Priority.Name)
+	issueType := utils.LowerKebabCase(issue.Fields.IssueType.Name)
+	priority := utils.LowerKebabCase(issue.Fields.Priority.Name)
 
 	switch issueType {
 		case "bug":
@@ -33,7 +33,7 @@ func generateIssueTag(issue jira.JiraIssue) string {
 }
 
 func generateBranchName(issue jira.JiraIssue) string {
-	branchTemplate := viper.GetString("branchtemplate")
+	branchTemplate := viper.GetString("git.branchtemplate")
 	projectName := viper.GetString("projectname")
 	author := viper.GetString("author")
 	template := strings.Split(branchTemplate, "/")
@@ -42,7 +42,7 @@ func generateBranchName(issue jira.JiraIssue) string {
 	// this is a user error but still confusing
 	for i := range template {
 		switch template[i] {
-		case "{projectname}": template[i] = utils.KebabCase(projectName)
+		case "{projectname}": template[i] = utils.LowerKebabCase(projectName)
 			break
 		case "{jira-issue-number}": template[i] = issue.Key
 			break
@@ -52,7 +52,7 @@ func generateBranchName(issue jira.JiraIssue) string {
 			break
 		case "{date}": template[i] = time.Now().Format("06-01-02")
 			break
-		case "{author}": template[i] = utils.KebabCase(author)
+		case "{author}": template[i] = utils.LowerKebabCase(author)
 			break
 		}
 	}

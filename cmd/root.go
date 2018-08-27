@@ -55,7 +55,7 @@ func init() {
 	//  If Persistent flags are defined here they are global
 	rootCmd.PersistentFlags().StringVar(&CONFIG_FILE, "config", "", "config file (default is $HOME/.vor, or the current directory)")
 	viper.SetDefault("devmode", false)
-	viper.SetDefault("branchtemplate", "{jira-issue-number}/{jira-issue-type}/{jira-issue-title}")
+	viper.SetDefault("git.branchtemplate", "{jira-issue-number}/{jira-issue-type}/{jira-issue-title}")
 	viper.SetDefault("git.path", "/usr/local/bin/git")
 	viper.SetDefault("git.pull-request-base", "master")
 }
@@ -65,9 +65,7 @@ func initConfig() {
 	viper.SetConfigName("vor")
 	viper.SetConfigFile(".vor")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("../")
-	viper.AddConfigPath("../../")
-	viper.AddConfigPath("../../../")
+
 	if CONFIG_FILE != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(CONFIG_FILE)
