@@ -18,43 +18,54 @@ import (
 	"time"
 )
 
+// TODO: this should be generic per issue provider
 func generateIssueTag(issue jira.JiraIssue) string {
-	switch issue.Fields.IssueType.Name {
-	case "bug":
-		if issue.Fields.Priority.Name == "blocker" {
-			return "blocker"
-		}
-		return "bug"
-	case "story", "task":
-		return "feature"
-	default:
-		return "feature"
+	issueType := strings.ToLower(issue.Fields.IssueType.Name)
+	priority := strings.ToLower(issue.Fields.Priority.Name)
+
+	switch issueType {
+		case "bug":
+			if priority == "blocker" { return "blocker" }
+			return "bug"
+		case "story", "task": return "feature"
+		default: return issueType
 	}
 }
 
 func generateBranchName(issue jira.JiraIssue) string {
 	branchTemplate := viper.GetString("branchtemplate")
 	projectName := viper.GetString("projectname")
-	templateParts := strings.Split(branchTemplate, "/")
+	author := viper.GetString("author")
+	template := strings.Split(branchTemplate, "/")
 
-	for i := range templateParts {
-		switch templateParts[i] {
-		case "{projectname}":
-			templateParts[i] = projectName
+	// TODO add output to logger if an entry is empty
+	// this is a user error but still confusing
+	for i := range template {
+		switch template[i] {
+		case "{projectname}": template[i] = projectName
 			break
-		case "{jira-issue-number}":
-			templateParts[i] = issue.Key
+		case "{jira-issue-number}": template[i] = issue.Key
 			break
-		case "{jira-issue-type}":
-			templateParts[i] = generateIssueTag(issue)
+		case "{jira-issue-type}": template[i] = generateIssueTag(issue)
 			break
-		case "{jira-issue-title}":
-			templateParts[i] = utils.LowerKebabCase(issue.Fields.Summary)
+		case "{jira-issue-title}": template[i] = utils.LowerKebabCase(issue.Fields.Summary)
+			break
+		case "{date}": template[i] = time.Now().Format("06-01-02")
+			break
+		case "{author}": template[i] = author
 			break
 		}
 	}
 
-	branchName := strings.Join(templateParts, "/")
+	// remove empty entries
+	cleanTemplate := make([]string, len(template))
+	for _, item := range template {
+		if item != "" {
+			cleanTemplate = append(cleanTemplate, item)
+		}
+	}
+
+	branchName := strings.Join(cleanTemplate, "/")
 	logger.Debug("build branch name: " + branchName)
 	return branchName
 }
