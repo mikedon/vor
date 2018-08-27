@@ -42,7 +42,7 @@ func generateBranchName(issue jira.JiraIssue) string {
 	// this is a user error but still confusing
 	for i := range template {
 		switch template[i] {
-		case "{projectname}": template[i] = projectName
+		case "{projectname}": template[i] = utils.KebabCase(projectName)
 			break
 		case "{jira-issue-number}": template[i] = issue.Key
 			break
@@ -52,7 +52,7 @@ func generateBranchName(issue jira.JiraIssue) string {
 			break
 		case "{date}": template[i] = time.Now().Format("06-01-02")
 			break
-		case "{author}": template[i] = author
+		case "{author}": template[i] = utils.KebabCase(author)
 			break
 		}
 	}
