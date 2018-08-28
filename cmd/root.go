@@ -76,6 +76,28 @@ func initConfig() {
 		fmt.Println(homeErr)
 		system.Exit("vor encountered an error attempting to read from the filesystem")
 	}
+
+	if _, err := os.Stat(home + "/.config"); os.IsNotExist(err) {
+		os.Mkdir(home + "/.config", os.ModeDir)
+	}
+	if _, err := os.Stat(home + "/.config/vor"); os.IsNotExist(err) {
+		os.Mkdir(home + "/.config/vor", os.ModeDir)
+	}
+	if _, err := os.Stat(home + "/.config/vor"); os.IsNotExist(err) {
+		f, createErr := os.Create(home + "/.config/vor/vor.yml")
+		if createErr != nil {
+			system.Exit("vor encountered an error attempting to write a default config to " + home + "/.config/vor/vor.yml")
+		}
+		defer f.Close()
+		contents := []byte("hello\ngo\n")
+		_, writeErr := f.Write(contents)
+		if writeErr != nil {
+			system.Exit("vor encountered an error attempting to write a default config to " + home + "/.config/vor/vor.yml")
+		}
+		f.Sync()
+		fmt.Println("Created a new default configuration at ~/.config/vor/")
+	}
+
 	configPath, walkErr := walkUpFS(filepath.Base(home), )
 	fmt.Println("configPath: "+configPath)
 	if walkErr != nil {
