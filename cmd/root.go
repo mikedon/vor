@@ -8,8 +8,10 @@ import (
 	"github.com/spf13/viper"
 	"github.com/trevor-atlas/vor/env"
 	"github.com/trevor-atlas/vor/formatters"
+	"github.com/trevor-atlas/vor/logger"
 	"github.com/trevor-atlas/vor/system"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -62,24 +64,61 @@ func init() {
 
 func initConfig() {
 	viper.SetConfigType("yaml")
-	viper.SetConfigName("vor")
-	viper.SetConfigFile(".vor")
-	viper.AddConfigPath(".")
+	viper.SetConfigName(".vor")
 
 	if CONFIG_FILE != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(CONFIG_FILE)
-	} else {
-		home, err := homedir.Dir()
-		if err != nil {
-			fmt.Println(err)
-			system.Exit("vor encountered an error attempting to read from the filesystem")
-		}
-		viper.AddConfigPath(home)
+		viper.SetConfigFile(CONFIG_FILE) // Use config file from the flag.
+		return
 	}
+
+	home, homeErr := homedir.Dir()
+	if homeErr != nil {
+		fmt.Println(homeErr)
+		system.Exit("vor encountered an error attempting to read from the filesystem")
+	}
+	configPath, walkErr := walkUpFS(filepath.Base(home), )
+	fmt.Println("configPath: "+configPath)
+	if walkErr != nil {
+		fmt.Println(walkErr)
+		system.Exit("vor encountered an error attempting to read from the filesystem")
+	}
+
+	viper.AddConfigPath(home)
+	viper.AddConfigPath(configPath)
+	viper.AddConfigPath(".")
 
 	if err := viper.ReadInConfig(); err != nil {
 		color.Red("Vor could not find a local config file, this can cause problems and is not recommended\n")
 		fmt.Println(err)
 	}
+}
+
+func walkUpFS(cutoff string) (match string, err error) {
+	// get the directory we started in
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	// split it into directories
+	path := strings.Split(currentDir, "/")
+	cutoff = filepath.Clean(cutoff)
+	for i := len(path) - 1; i >= 0; i-- {
+		here := strings.Join(path[0:i], "/")
+		if cutoff == here || i == 0 { // if we are at the cutoff directory, stop
+			return "", nil
+		} else { // otherwise, walk the path from i
+			logger.Debug("walking " + here)
+			matches, err := filepath.Glob(here + "/.vor.*")
+			if err != nil{
+				logger.Debug("walk error [%v]\n", err)
+				return "", err
+			}
+			if len(matches) > 0 {
+				logger.Debug("walker done!")
+				return matches[0], nil
+			}
+		}
+	}
+	logger.Debug("walker done!")
+	return "", nil
 }
